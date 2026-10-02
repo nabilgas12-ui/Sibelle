@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="apple-touch-icon" href="images/logo.png">
+  <title>Si Belle | سي بيل — Clothing Line</title>
+  <meta name="description" content="متجر سي بيل — ملابس نسائية أنيقة: حجابات، إنسمبل، ملابس منزلية، جبة العيد والعبايات.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="rtl">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-top-track">
+        <span class="header-top-item" data-i18n="topBanner">🚚 توصيل سريع إلى جميع ولايات الجزائر • دفع عند الاستلام متاح</span>
+        <span class="header-top-item" data-i18n="topBanner">🚚 توصيل سريع إلى جميع ولايات الجزائر • دفع عند الاستلام متاح</span>
+        <span class="header-top-item" data-i18n="topBanner">🚚 توصيل سريع إلى جميع ولايات الجزائر • دفع عند الاستلام متاح</span>
+        <span class="header-top-item" data-i18n="topBanner">🚚 توصيل سريع إلى جميع ولايات الجزائر • دفع عند الاستلام متاح</span>
+      </div>
+    </div>
+    <div class="header-main">
+      <a href="index.html" class="logo">
+        <img src="images/logo.png" alt="Si Belle">
+        <span class="logo-text">Si <span>Belle</span></span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="active" data-i18n="navHome">الرئيسية</a>
+        <a href="shop.html" data-i18n="navShop">المتجر</a>
+        <a href="about.html" data-i18n="navAbout">من نحن</a>
+        <a href="contact.html" data-i18n="navContact">اتصل بنا</a>
+      </nav>
+      <div class="header-actions">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="search" class="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="بحث..." aria-label="Search">
+        </div>
+        <button class="icon-btn" aria-label="Wishlist" onclick="openWishlist()" style="position:relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <button class="icon-btn track-btn" onclick="openTrackModal()" aria-label="Track order" title="تتبع طلبي">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </button>
+        <button class="icon-btn cart-btn" onclick="openCart()" aria-label="Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cart-count" style="display:none !important"></span>
+        </button>
+        <button class="icon-btn theme-btn" onclick="toggleTheme()" aria-label="Theme">
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="ar" onclick="setLanguage('ar')">عربي</button>
+          <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">FR</button>
+        </div>
+        <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero — full background image -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1>
+          <span data-i18n="heroSubtitle">سي بيل</span>
+          <span class="sub" data-i18n="heroTitle">أناقتك تبدأ من هنا</span>
+        </h1>
+        <p data-i18n="heroDesc">اكتشفي مجموعتنا من الملابس الأنيقة: حجابات، إنسمبل، ملابس منزلية، وجبة العيد والعبايات.</p>
+        <div class="hero-btns">
+          <a href="shop.html" class="btn btn-primary" data-i18n="btnShop">تسوقي الآن</a>
+          <a href="#categories" class="btn btn-secondary" data-i18n="btnDiscover">اكتشفي المجموعة</a>
+          <button type="button" class="btn btn-secondary" onclick="openTrackModal()" data-i18n="trackOrder">تتبع طلبي</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="section" id="categories">
+    <div class="section-header">
+      <h2 data-i18n="catTitle">تصنيفاتنا</h2>
+      <div class="divider"><span></span><span class="heart">♥</span><span></span></div>
+      <p data-i18n="catSubtitle">اختاري ما يناسب أسلوبكِ</p>
+    </div>
+    <div class="categories-wrapper">
+      <button class="cat-nav" onclick="scrollCategories(-1)" aria-label="Previous">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="categories-grid" id="categoriesGrid">
+        <!-- تُملأ ديناميكياً من Supabase بنفس الشكل -->
+      </div>
+      <button class="cat-nav" onclick="scrollCategories(1)" aria-label="Next">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Featured -->
+  <section class="section" style="background:linear-gradient(180deg,transparent,rgba(248,200,220,0.2),transparent)">
+    <div class="section-header">
+      <h2 data-i18n="featuredTitle">منتجات مميزة</h2>
+      <div class="divider"><span></span><span class="heart">♥</span><span></span></div>
+      <p data-i18n="featuredSubtitle">الأكثر طلباً من سي بيل</p>
+    </div>
+    <div class="products-grid" id="productsGrid"></div>
+    <div style="text-align:center;margin-top:32px">
+      <a href="shop.html" class="btn btn-secondary" data-i18n="allProducts">كل المنتجات</a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="features">
+      <div class="feature">
+        <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.8 5.6 21.2 8 14 2 9.2h7.6z"/></svg></div>
+        <h4 data-i18n="feature1">جودة راقية</h4>
+        <p data-i18n="feature1Desc">أقمشة مختارة وتصاميم عصرية</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+        <h4 data-i18n="feature2">توصيل سريع</h4>
+        <p data-i18n="feature2Desc">إلى جميع ولايات الجزائر</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+        <h4 data-i18n="feature3">دفع مريح</h4>
+        <p data-i18n="feature3Desc">الدفع عند الاستلام متاح</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h4 data-i18n="feature4">دعم محلي</h4>
+        <p data-i18n="feature4Desc">فريق جزائري جاهز لمساعدتكِ</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">Si <span style="color:var(--gold-light)">Belle</span></div>
+        <p data-i18n="footerDesc">علامة جزائرية للملابس النسائية الأنيقة والمريحة.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html" data-i18n="navHome">الرئيسية</a></li>
+          <li><a href="shop.html" data-i18n="navShop">المتجر</a></li>
+          <li><a href="about.html" data-i18n="navAbout">من نحن</a></li>
+          <li><a href="contact.html" data-i18n="navContact">اتصل بنا</a></li>
+          <li><a href="privacy.html" data-i18n="privacyTitle">سياسة الخصوصية</a></li>
+          <li><a href="terms.html" data-i18n="termsTitle">الشروط والأحكام</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-i18n="footerCats">التصنيفات</h4>
+        <ul>
+          <li><a href="shop.html?cat=hijab" data-i18n="catHijab">حجابات</a></li>
+          <li><a href="shop.html?cat=ensemble" data-i18n="catEnsemble">إنسمبل</a></li>
+          <li><a href="shop.html?cat=home" data-i18n="catHome">ملابس منزلية</a></li>
+          <li><a href="shop.html?cat=occasion" data-i18n="catOccasion">مناسبات</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">تواصل معنا</h4>
+                <ul class="footer-contact">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span id="footerPhone">0555 00 00 00</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span id="footerEmail">contact@sibelle.dz</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="footerAddress">الجزائر</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footerRights">© 2026 Si Belle — جميع الحقوق محفوظة</span>
+      <span class="footer-sep">·</span>
+      <a href="privacy.html" data-i18n="privacyTitle">سياسة الخصوصية</a>
+      <span class="footer-sep">·</span>
+      <a href="terms.html" data-i18n="termsTitle">الشروط والأحكام</a>
+    </div>
+  </footer>
+
+  <!-- Cart -->
+
+
+  <!-- Mobile Nav -->
+  <div class="nav-overlay" id="navOverlay" onclick="closeMenu()"></div>
+  <div class="mobile-nav-panel" id="mobileNavPanel">
+    <div class="nav-links">
+      <a href="index.html" class="active" data-i18n="navHome">الرئيسية</a>
+      <a href="shop.html" data-i18n="navShop">المتجر</a>
+      <a href="about.html" data-i18n="navAbout">من نحن</a>
+      <a href="contact.html" data-i18n="navContact">اتصل بنا</a>
+      <a href="#" onclick="openTrackModal();closeMenu();return false;" data-i18n="trackOrder">تتبع طلبي</a>
+    </div>
+    <div class="nav-footer">
+      <div class="lang-switch">
+        <button class="lang-btn active" data-lang="ar" onclick="setLanguage('ar')">عربي</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">FR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Track Order Modal -->
+  <div class="track-overlay" id="trackOverlay" onclick="if(event.target===this)closeTrackModal()">
+    <div class="track-modal">
+      <button class="track-close" onclick="closeTrackModal()">&times;</button>
+      <h3 data-i18n="trackOrder">تتبع طلبي</h3>
+      <p class="track-desc" data-i18n="trackDesc">أدخلي رقم الطلب ورقم الهاتف المستخدم عند الطلب</p>
+      <div class="track-form" style="display:flex;flex-direction:column;gap:10px">
+        <input type="text" id="trackInput" placeholder="SB-XXXXXXXX-XXXX" class="track-input">
+        <input type="tel" id="trackPhone" placeholder="05xxxxxxxx" class="track-input" dir="ltr">
+        <button type="button" class="btn btn-primary" onclick="searchOrder()" data-i18n="trackSearch">بحث</button>
+      </div>
+      <div id="trackResult" class="track-result" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3 data-i18n="cartTitle">سلة التسوق</h3>
+      <button class="cart-close" onclick="closeCart()">×</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="cart-total"><span data-i18n="total">المجموع</span><span id="cartTotal">0 دج</span></div>
+      <button class="btn-checkout" onclick="goToCheckout()" data-i18n="checkout">إتمام الطلب</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

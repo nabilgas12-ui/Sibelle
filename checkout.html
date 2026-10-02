@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="apple-touch-icon" href="images/logo.png">
+  <title>إتمام الطلب | Si Belle</title>
+  <link rel="preconnect" href="https://jmqyganibaayodsrdxxl.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .checkout-page { max-width: 960px; margin: 0 auto; padding: 24px; }
+    .checkout-grid { display: grid; grid-template-columns: 1.2fr 0.9fr; gap: 28px; align-items: start; }
+    @media (max-width: 800px) { .checkout-grid { grid-template-columns: 1fr; } }
+    .checkout-card {
+      background: var(--card); border-radius: 20px; padding: 28px;
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+    }
+    .checkout-card h2 {
+      font-family: var(--font-sans); font-size: 1.15rem; color: var(--brown);
+      margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .checkout-card h2 .step {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: #fff;
+      font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .summary-item {
+      display: flex; gap: 12px; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .summary-item img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; }
+    .summary-item .info { flex: 1; }
+    .summary-item .info h4 { font-size: 0.9rem; color: var(--brown); margin-bottom: 2px; }
+    .summary-item .info span { font-size: 0.8rem; color: var(--brown-light); }
+    .summary-item .price { font-weight: 700; color: var(--gold-dark); font-size: 0.95rem; white-space: nowrap; }
+    .summary-total {
+      display: flex; justify-content: space-between; margin-top: 16px; padding-top: 16px;
+      border-top: 2px solid var(--border); font-size: 1.15rem; font-weight: 700; color: var(--brown);
+    }
+    .pay-options { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .pay-option {
+      display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px;
+      border: 1.5px solid var(--border); cursor: pointer; transition: 0.25s; background: var(--cream);
+    }
+    .pay-option:hover, .pay-option.active { border-color: var(--gold); background: rgba(201,162,39,0.1); }
+    .pay-option input { accent-color: var(--gold); }
+    .pay-option strong { display: block; color: var(--brown); font-size: 0.95rem; }
+    .pay-option small { color: var(--brown-light); font-size: 0.8rem; }
+    .shipping-note {
+      background: rgba(201,162,39,0.12); border-radius: 12px; padding: 12px 14px;
+      font-size: 0.88rem; color: var(--brown); margin-top: 16px; display: flex; gap: 8px; align-items: flex-start;
+    }
+  </style>
+</head>
+<body class="rtl">
+  <header class="header">
+    <div class="header-main" style="justify-content:space-between">
+      <a href="index.html" class="logo">
+        <img src="images/logo.png" alt="Si Belle">
+        <span class="logo-text">Si <span>Belle</span></span>
+      </a>
+      <div class="header-actions">
+        <button class="icon-btn theme-btn" onclick="toggleTheme()">
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="ar" onclick="setLanguage('ar')">عربي</button>
+          <button class="lang-btn" data-lang="fr" onclick="setLanguage('fr')">FR</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-hero"><h1 data-i18n="checkout">إتمام الطلب</h1></div>
+
+  <div class="checkout-page">
+    <div class="checkout-grid">
+      <div class="checkout-card">
+        <h2><span class="step">1</span> معلومات التوصيل</h2>
+        <form id="orderForm" onsubmit="return submitOrder(event)">
+          <div class="form-group">
+            <label data-i18n="formName">الاسم الكامل</label>
+            <input type="text" name="name" required placeholder="مثال: فاطمة بن علي">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="formPhone">رقم الهاتف</label>
+              <input type="tel" name="phone" required placeholder="05XX XX XX XX">
+            </div>
+            <div class="form-group">
+              <label data-i18n="formEmail">البريد الإلكتروني</label>
+              <input type="email" name="email" placeholder="email@example.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="formWilaya">الولاية</label>
+              <select name="wilaya" id="wilayaSelect" required onchange="onWilayaChange()">
+                <option value="">— اختاري الولاية —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>البلدية</label>
+              <select name="commune" id="communeSelect" required>
+                <option value="">— اختاري البلدية —</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="formAddress">العنوان التفصيلي</label>
+            <textarea name="address" rows="2" required placeholder="الحي، الشارع، رقم المنزل..."></textarea>
+          </div>
+          <div class="form-group">
+            <label data-i18n="formNotes">ملاحظات على الطلب</label>
+            <textarea name="notes" rows="2" placeholder="مقاس، لون، أو أي ملاحظة..."></textarea>
+          </div>
+
+          <h2 style="margin-top:28px"><span class="step">2</span> طريقة الدفع</h2>
+          <div class="pay-options" id="payOptions">
+            <label class="pay-option active">
+              <input type="radio" name="payment" value="cod" checked onchange="selectPay(this)">
+              <div><strong data-i18n="payCod">الدفع عند الاستلام</strong><small> نقداً عند استلام الطلب</small></div>
+            </label>
+            <label class="pay-option">
+              <input type="radio" name="payment" value="ccp" onchange="selectPay(this)">
+              <div><strong data-i18n="payCcp">تحويل بريدي / CCP</strong><small> سنرسل رقم الحساب بعد التأكيد</small></div>
+            </label>
+            <label class="pay-option">
+              <input type="radio" name="payment" value="baridi" onchange="selectPay(this)">
+              <div><strong data-i18n="payBaridi">Baridi Mob</strong><small> دفع إلكتروني عبر بريد الجزائر</small></div>
+            </label>
+          </div>
+          <script>
+          (function loadPayMethods(){
+            function run(){
+              var box = document.getElementById('payOptions');
+              if(!box) return;
+              var list = [];
+              try {
+                var s = JSON.parse(localStorage.getItem('siBelleAdminSettings')||'null');
+                if(s && Array.isArray(s.payments)) list = s.payments.filter(function(p){return p.enabled!==false;});
+                else {
+                  var p2 = JSON.parse(localStorage.getItem('siBellePayments')||'null');
+                  if(Array.isArray(p2)) list = p2.filter(function(p){return p.enabled!==false;});
+                }
+              } catch(e){}
+              if(!list.length) return;
+              var lang = localStorage.getItem('siBelleLang')||'ar';
+              box.innerHTML = list.map(function(p,i){
+                var name = (p.name && (p.name[lang]||p.name.ar)) || p.id;
+                var desc = (p.desc && (p.desc[lang]||p.desc.ar)) || '';
+                var det = p.details ? '<small style="display:block;margin-top:4px;opacity:.8;direction:ltr;text-align:left">'+String(p.details).replace(/</g,'')+'</small>' : '';
+                return '<label class="pay-option'+(i===0?' active':'')+'"><input type="radio" name="payment" value="'+p.id+'" '+(i===0?'checked':'')+' onchange="selectPay(this)"><div><strong>'+name+'</strong><small> '+desc+'</small>'+det+'</div></label>';
+              }).join('');
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run); else run();
+          })();
+          </script>
+
+          <div class="shipping-note">
+            <span>🚚</span>
+            <span>التوصيل متاح لكل ولايات الجزائر — مجاني فوق 8000 دج</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:24px;padding:14px" data-i18n="formSubmit">تأكيد الطلب</button>
+        </form>
+      </div>
+
+      <div class="checkout-card" style="position:sticky;top:90px">
+        <h2><span class="step">✓</span> <span data-i18n="orderSummary">ملخص الطلب</span></h2>
+        <div id="checkoutItems"></div>
+        <div class="summary-total">
+          <span data-i18n="total">المجموع</span>
+          <span id="checkoutTotal">0 دج</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/algeria.js"></script>
+  <script>
+    function selectPay(el) {
+      document.querySelectorAll('.pay-option').forEach(o => o.classList.remove('active'));
+      el.closest('.pay-option').classList.add('active');
+    }
+    function renderCheckout() {
+      const container = document.getElementById('checkoutItems');
+      if (!container) return;
+      if (!cart || cart.length === 0) {
+        container.innerHTML = '<p style="color:var(--brown-light);text-align:center;padding:20px">' + t('cartEmpty') + '</p>';
+        document.getElementById('checkoutTotal').textContent = '0 ' + t('currency');
+        return;
+      }
+      let total = 0;
+      container.innerHTML = cart.map(item => {
+        const p = products.find(x => x.id === item.id || String(x.id) === String(item.id));
+        if (!p) return '';
+        total += p.price * item.qty;
+        const img = p.image ? '<img src="'+p.image+'" alt="">' : '<div style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--cream-dark);border-radius:10px;font-size:1.4rem">'+p.icon+'</div>';
+        var variant = [item.color, item.size].filter(Boolean).join(' · ');
+        return '<div class="summary-item">'+img+'<div class="info"><h4>'+p.name[currentLang]+'</h4>'+(variant?'<span style="font-size:0.78rem;color:var(--brown-light)">'+variant+'</span><br>':'')+'<span>× '+item.qty+'</span></div><div class="price">'+(p.price*item.qty).toLocaleString()+' '+t('currency')+'</div></div>';
+      }).join('');
+      const freeFrom = (storeSettings && storeSettings.default_free_shipping_from) || 8000;
+      const shipCost = (storeSettings && storeSettings.default_shipping_cost) || 400;
+      const ship = total >= freeFrom ? 0 : shipCost;
+      if (ship > 0) {
+        container.innerHTML += '<div class="summary-item"><div class="info"><h4>التوصيل</h4></div><div class="price">'+ship+' '+t('currency')+'</div></div>';
+        total += ship;
+      } else {
+        container.innerHTML += '<div class="summary-item"><div class="info"><h4>التوصيل</h4></div><div class="price" style="color:#2d8a4e">'+(currentLang==='ar'?'مجاني':'Gratuit')+'</div></div>';
+      }
+      document.getElementById('checkoutTotal').textContent = total.toLocaleString() + ' ' + t('currency');
+    }
+    let wilayasDB = [];
+    let storeDefaults = { default_shipping_cost: 400, default_free_shipping_from: 8000 };
+    let storeSettings = { default_shipping_cost: 400, default_free_shipping_from: 8000 };
+
+    function updateShippingNote(wilayaName) {
+      const note = document.querySelector('.shipping-note span:last-child');
+      if (!note) return;
+      const free = storeSettings.default_free_shipping_from;
+      const cost = storeSettings.default_shipping_cost;
+      const lang = localStorage.getItem('siBelleLang') || 'ar';
+      if (wilayaName) {
+        note.textContent = lang === 'ar'
+          ? ('التوصيل إلى ' + wilayaName + ' — ' + cost + ' دج · مجاني فوق ' + free + ' دج')
+          : ('Livraison vers ' + wilayaName + ' — ' + cost + ' DA · gratuit au-delà de ' + free + ' DA');
+      } else {
+        note.textContent = lang === 'ar'
+          ? ('التوصيل متاح لكل ولايات الجزائر — ' + cost + ' دج · مجاني فوق ' + free + ' دج')
+          : ('Livraison toutes wilayas — ' + cost + ' DA · gratuit au-delà de ' + free + ' DA');
+      }
+    }
+
+    async function loadCheckoutSettings() {
+      try {
+        if (typeof SiBelleSB !== 'undefined') {
+          const s = await SiBelleSB.loadStoreSettings();
+          if (s) {
+            storeDefaults.default_shipping_cost = Number(s.default_shipping_cost) || 400;
+            storeDefaults.default_free_shipping_from = Number(s.default_free_shipping_from) || 8000;
+          }
+        }
+      } catch (e) { console.warn(e); }
+      storeSettings.default_shipping_cost = storeDefaults.default_shipping_cost;
+      storeSettings.default_free_shipping_from = storeDefaults.default_free_shipping_from;
+      updateShippingNote();
+    }
+
+    async function ensureWilayas() {
+      if (wilayasDB.length) return wilayasDB;
+      if (typeof SiBelleSB !== 'undefined') {
+        try {
+          const sb = SiBelleSB.getSupabase && SiBelleSB.getSupabase();
+          if (sb) {
+            // Load wilayas + shipping + communes from DB
+            const { data: ws } = await sb.from('wilayas').select('*').eq('active', true).order('sort_order');
+            let prices = {};
+            try {
+              const { data: ps } = await sb.from('wilaya_shipping').select('*');
+              (ps || []).forEach(function(r) { prices[r.wilaya_id] = r; });
+            } catch(e) {}
+            if (ws && ws.length) {
+              wilayasDB = ws.map(function(w) {
+                let communes = [];
+                if (Array.isArray(w.communes)) communes = w.communes;
+                else if (typeof w.communes === 'string') {
+                  try { communes = JSON.parse(w.communes); } catch(e) {
+                    communes = String(w.communes).split(/[,،\n]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+                  }
+                }
+                // fallback communes from ALGERIA static if empty
+                if (!communes.length && typeof ALGERIA !== 'undefined') {
+                  const code = String(w.code || '').padStart(2, '0');
+                  const key = Object.keys(ALGERIA).find(function(k) {
+                    return k.indexOf(code) === 0 || k.indexOf(w.name_ar) >= 0;
+                  });
+                  if (key) communes = ALGERIA[key].slice();
+                }
+                const p = prices[w.id] || {};
+                return {
+                  id: w.id,
+                  code: w.code,
+                  name_ar: w.name_ar,
+                  name_fr: w.name_fr,
+                  communes: communes,
+                  shipping_price: p.price != null ? Number(p.price) : 400,
+                  free_shipping_from: p.free_shipping_from != null ? Number(p.free_shipping_from) : 8000
+                };
+              });
+              fillWilayaSelectFromDB();
+              return wilayasDB;
+            }
+          }
+        } catch (e) { console.warn(e); }
+        wilayasDB = await SiBelleSB.loadWilayas();
+      }
+      return wilayasDB;
+    }
+
+    function fillWilayaSelectFromDB() {
+      const sel = document.getElementById('wilayaSelect');
+      if (!sel || !wilayasDB.length) return;
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">' + (currentLang==='ar' ? '— اختاري الولاية —' : '— Wilaya —') + '</option>';
+      wilayasDB.forEach(function(w) {
+        const opt = document.createElement('option');
+        opt.value = String(w.id);
+        const label = (w.code ? (w.code + ' - ') : '') + (currentLang==='ar' ? (w.name_ar || w.name_fr) : (w.name_fr || w.name_ar));
+        opt.textContent = label;
+        opt.dataset.price = w.shipping_price || 400;
+        opt.dataset.free = w.free_shipping_from || 8000;
+        sel.appendChild(opt);
+      });
+      if (cur) sel.value = cur;
+      sel.dataset.fromDb = '1';
+    }
+
+    function onWilayaChange() {
+      const sel = document.getElementById('wilayaSelect');
+      const commune = document.getElementById('communeSelect');
+      if (!commune) return;
+      commune.innerHTML = '<option value="">' + (currentLang==='ar' ? '— اختاري البلدية —' : '— Commune —') + '</option>';
+      const val = sel ? sel.value : '';
+      let list = [];
+      // From DB wilayas
+      const w = wilayasDB.find(function(x) { return String(x.id) === String(val) || String(x.code) === String(val); });
+      if (w && w.communes && w.communes.length) {
+        list = w.communes;
+      } else if (typeof ALGERIA !== 'undefined' && ALGERIA[val]) {
+        list = ALGERIA[val];
+      } else if (typeof ALGERIA !== 'undefined') {
+        // match by name in key
+        const key = Object.keys(ALGERIA).find(function(k) {
+          return w && (k.indexOf(w.name_ar) >= 0 || k.indexOf(String(w.code)) === 0);
+        });
+        if (key) list = ALGERIA[key];
+      }
+      list.forEach(function(c) {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        commune.appendChild(opt);
+      });
+      // update shipping cost + note from selected wilaya
+      const opt = sel && sel.selectedOptions && sel.selectedOptions[0];
+      if (w) {
+        storeSettings.default_shipping_cost = w.shipping_price != null ? Number(w.shipping_price) : storeDefaults.default_shipping_cost;
+        storeSettings.default_free_shipping_from = w.free_shipping_from != null ? Number(w.free_shipping_from) : storeDefaults.default_free_shipping_from;
+        const wName = currentLang === 'ar' ? (w.name_ar || w.name_fr) : (w.name_fr || w.name_ar);
+        updateShippingNote(wName);
+        renderCheckout();
+      } else if (opt && opt.value && (opt.dataset.price || opt.dataset.free)) {
+        // fallback: prices stored on <option> dataset
+        if (opt.dataset.price) storeSettings.default_shipping_cost = Number(opt.dataset.price) || storeDefaults.default_shipping_cost;
+        if (opt.dataset.free) storeSettings.default_free_shipping_from = Number(opt.dataset.free) || storeDefaults.default_free_shipping_from;
+        updateShippingNote(opt.textContent || '');
+        renderCheckout();
+      } else if (val) {
+        // static wilaya selected — use store defaults but show wilaya name
+        storeSettings.default_shipping_cost = storeDefaults.default_shipping_cost;
+        storeSettings.default_free_shipping_from = storeDefaults.default_free_shipping_from;
+        updateShippingNote(opt ? opt.textContent : val);
+        renderCheckout();
+      } else {
+        // no wilaya selected — reset to defaults
+        storeSettings.default_shipping_cost = storeDefaults.default_shipping_cost;
+        storeSettings.default_free_shipping_from = storeDefaults.default_free_shipping_from;
+        updateShippingNote();
+        renderCheckout();
+      }
+    }
+    window._checkoutWilayaChange = onWilayaChange;
+    window.onWilayaChange = onWilayaChange;
+
+    async function submitOrder(e) {
+      e.preventDefault();
+      if (!cart || cart.length === 0) { showToast(currentLang==='ar'?'السلة فارغة':'Panier vide'); return false; }
+      const form = e.target;
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = currentLang==='ar' ? 'جاري الإرسال...' : 'Envoi...'; }
+
+      try {
+        // Wait for products so we can validate cart lines
+        if (typeof waitForProducts === 'function') await waitForProducts(5000);
+        await ensureWilayas();
+        const wilayaVal = form.wilaya.value; // may be name or id depending on algeria.js
+        let wilayaId = null;
+        // try numeric id first
+        if (/^\d+$/.test(wilayaVal)) {
+          wilayaId = parseInt(wilayaVal, 10);
+        } else {
+          // match by name_ar or name_fr
+          const found = wilayasDB.find(w => w.name_ar === wilayaVal || w.name_fr === wilayaVal || w.code === wilayaVal);
+          if (found) wilayaId = found.id;
+        }
+        if (!wilayaId) {
+          // fallback: try to match from select option text
+          const sel = form.wilaya;
+          const optText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+          const found2 = wilayasDB.find(w => optText.indexOf(w.name_ar) >= 0 || optText.indexOf(w.name_fr) >= 0);
+          if (found2) wilayaId = found2.id;
+        }
+        if (!wilayaId) throw new Error(currentLang==='ar' ? 'ولاية غير صالحة' : 'Wilaya invalide');
+
+        const items = cart.map(function(it) {
+          return {
+            product_id: it.id,
+            variant_id: it.variant_id || null,
+            quantity: it.qty,
+            color: it.color || null,
+            size: it.size || null
+          };
+        });
+
+        // Build notes including color/size so admin always sees them even if DB columns missing
+        let notesRaw = (form.notes.value || '').trim();
+        const variantLines = items.map(function(it, idx) {
+          const parts = [];
+          if (it.color) parts.push((currentLang==='ar'?'لون':'Couleur') + ': ' + it.color);
+          if (it.size) parts.push((currentLang==='ar'?'مقاس':'Taille') + ': ' + it.size);
+          if (!parts.length) return null;
+          return (idx + 1) + ') ' + parts.join(' · ');
+        }).filter(Boolean);
+        if (variantLines.length) {
+          const block = (currentLang==='ar' ? 'التفاصيل: ' : 'Détails: ') + variantLines.join(' | ');
+          notesRaw = notesRaw ? (notesRaw + '\n' + block) : block;
+        }
+
+        const result = await SiBelleSB.createOrder({
+          customer_name: form.name.value.trim(),
+          customer_phone: form.phone.value.trim(),
+          customer_email: (form.email.value || '').trim() || null,
+          wilaya_id: wilayaId,
+          commune: form.commune.value.trim(),
+          address: form.address.value.trim(),
+          delivery_type: 'home',
+          notes: notesRaw || null,
+          payment_method_id: form.payment.value || 'cod',
+          items: items,
+          coupon_code: null
+        });
+
+        // save last order for success page (include address fields for invoice)
+        const wilayaSel = form.wilaya;
+        const wilayaOpt = wilayaSel && wilayaSel.options[wilayaSel.selectedIndex];
+        let wilayaName = '';
+        if (wilayaOpt && wilayaOpt.text) {
+          // strip "01 - " code prefix if present
+          wilayaName = wilayaOpt.text.replace(/^\d+\s*[-–]\s*/, '').trim();
+        }
+        if (!wilayaName && wilayaId && wilayasDB.length) {
+          const wObj = wilayasDB.find(function(w) { return String(w.id) === String(wilayaId); });
+          if (wObj) wilayaName = (currentLang === 'ar' ? (wObj.name_ar || wObj.name_fr) : (wObj.name_fr || wObj.name_ar)) || '';
+        }
+        const last = {
+          orderNumber: result.order_number,
+          id: result.id,
+          name: form.name.value.trim(),
+          phone: form.phone.value.trim(),
+          wilaya: wilayaName || form.wilaya.value || '',
+          commune: form.commune.value.trim(),
+          address: form.address.value.trim(),
+          payment: form.payment.value || 'cod',
+          total: result.total,
+          subtotal: result.subtotal,
+          shipping_cost: result.shipping_cost,
+          discount: result.discount,
+          date: new Date().toISOString()
+        };
+        localStorage.setItem('siBelleLastOrder', JSON.stringify(last));
+        localStorage.removeItem('siBelleCart');
+        cart = [];
+        window.location.href = 'success.html?order=' + encodeURIComponent(result.order_number);
+      } catch (err) {
+        console.error(err);
+        let msg = (err && err.message) ? err.message : (currentLang==='ar' ? 'فشل إرسال الطلب' : 'Échec de la commande');
+        // Friendly message for missing pgcrypto extension
+        if (/gen_random_bytes/i.test(msg)) {
+          msg = currentLang==='ar'
+            ? 'خطأ في قاعدة البيانات: يجب تفعيل امتداد pgcrypto في Supabase (انظر FIX_ORDER.sql)'
+            : 'Erreur base de données: activez l’extension pgcrypto dans Supabase (voir FIX_ORDER.sql)';
+        }
+        showToast(msg);
+        if (btn) { btn.disabled = false; btn.textContent = t('formSubmit'); }
+      }
+      return false;
+    }
+    async function waitForProducts(maxMs) {
+      maxMs = maxMs || 8000;
+      const start = Date.now();
+      while (Date.now() - start < maxMs) {
+        if (typeof productsReady !== 'undefined' && productsReady) return true;
+        if (typeof products !== 'undefined' && products && products.length) return true;
+        await new Promise(function(r){ setTimeout(r, 80); });
+      }
+      return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      ensureWilayas();
+      loadCheckoutSettings().then(async function(){
+        await waitForProducts(8000);
+        renderCheckout();
+        // re-render once more shortly after in case products arrive late
+        setTimeout(renderCheckout, 400);
+        setTimeout(renderCheckout, 1200);
+      });
+    });
+  </script>
+</body>
+</html>
