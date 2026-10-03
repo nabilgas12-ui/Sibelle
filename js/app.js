@@ -6,6 +6,51 @@ let products = []; // loaded from Supabase
 let categoriesCache = [];
 let productsReady = false;
 
+/* ===== شريط الإعلان: مصدر الحقيقة = قاعدة البيانات (مع نسخة محلية لمنع الوميض) ===== */
+const BANNER_KEY = 'siBelleBanner_v1';
+let _bannerState = null;
+try { _bannerState = JSON.parse(localStorage.getItem(BANNER_KEY) || 'null'); } catch (e) {}
+function renderBanner() {
+  const bar = document.querySelector('.header-top');
+  if (!bar || !_bannerState) return;
+  if (!_bannerState.on) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  const lang = localStorage.getItem('siBelleLang') || 'ar';
+  const txt = lang === 'fr' ? (_bannerState.fr || _bannerState.ar) : (_bannerState.ar || _bannerState.fr);
+  if (txt) {
+    document.querySelectorAll('[data-i18n="topBanner"]').forEach(function(el) {
+      if (el.textContent !== txt) el.textContent = txt;
+    });
+  }
+}
+/** row: صف من القاعدة، أو null = لا يوجد شريط مفعّل */
+function setBannerState(row) {
+  const ar = row ? (row.text_ar || '') : '';
+  const fr = row ? (row.text_fr || '') : '';
+  const on = !!row && row.enabled !== false && !!((ar + fr).trim());
+  _bannerState = { on: on, ar: ar.trim(), fr: fr.trim() };
+  try { localStorage.setItem(BANNER_KEY, JSON.stringify(_bannerState)); } catch (e) {}
+  renderBanner();
+}
+let _bannerFetchTimer = null;
+function refreshBanner(delay) {
+  if (_bannerFetchTimer) clearTimeout(_bannerFetchTimer);
+  _bannerFetchTimer = setTimeout(async function() {
+    _bannerFetchTimer = null;
+    try {
+      if (typeof SiBelleSB === 'undefined') return;
+      const ann = await SiBelleSB.loadAnnouncement();
+      if (ann !== undefined) setBannerState(ann);
+    } catch (e) {}
+  }, delay || 0);
+}
+function onBannerChange(payload) {
+  if (payload.eventType === 'DELETE') setBannerState(null);
+  else if (payload.new) setBannerState(payload.new);   // فوري
+  refreshBanner(300);                                  // ثم مطابقة مع القاعدة
+}
+renderBanner(); // ارسم من النسخة المحلية فوراً (قبل أي طلب شبكة)
+
 /* ===== STORE LIVE UPDATES (Realtime + fast poll) ===== */
 let _storeRtChannel = null;
 let _storePollTimer = null;
@@ -332,6 +377,7 @@ function scheduleStoreLiveSync() {
 /** Tiny poll (no images). Triggers a full reload only when something really differs. */
 async function storeLightPoll() {
   if (document.hidden || _storeLiveBusy || typeof SiBelleSB === 'undefined') return;
+  refreshBanner(0);
   try {
     const rows = await SiBelleSB.loadProductsLight();
     if (!rows) return;
@@ -376,7 +422,7 @@ function startStoreLiveUpdates() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, onCategoryChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, scheduleCmsSync)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'site_content' }, scheduleCmsSync)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'announcement_banners' }, scheduleCmsSync)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'announcement_banners' }, onBannerChange)
         .subscribe(function(status) {
           if (status === 'SUBSCRIBED') {
             console.log('[SiBelle Store] Realtime connected');
@@ -800,6 +846,7 @@ function setLanguage(lang) {
     const key = el.getAttribute('data-i18n');
     if (translations[lang][key]) el.textContent = translations[lang][key];
   });
+  renderBanner();
 
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
@@ -1521,30 +1568,6 @@ window.changeModalQty = changeModalQty;
 window.addFromModal = addFromModal;
 
 
-/* Apply admin banner setting */
-(function applyBannerSetting() {
-  function run() {
-    const enabled = localStorage.getItem('siBelleBannerEnabled');
-    const top = document.querySelector('.header-top');
-    if (top && enabled === '0') top.style.display = 'none';
-    else if (top && enabled === '1') top.style.display = '';
-    // Apply content from admin if present
-    try {
-      const content = JSON.parse(localStorage.getItem('siBelleAdminContent') || 'null');
-      if (content && content.topBanner) {
-        document.querySelectorAll('[data-i18n="topBanner"]').forEach(el => {
-          const lang = localStorage.getItem('siBelleLang') || 'ar';
-          if (content.topBanner[lang]) el.textContent = content.topBanner[lang];
-        });
-      }
-    } catch(e) {}
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
-  else run();
-})();
-
-
-
 /** تطبيق كل محتوى CMS من الباك اند على الموقع */
 async function applyCmsFromBackend() {
   try {
@@ -1580,19 +1603,7 @@ async function applyCmsFromBackend() {
     }
 
     // --- شريط الإعلان ---
-    if (ann && ann.enabled !== false) {
-      const _bar = document.querySelector('.header-top');
-      if (_bar) _bar.style.display = '';
-      const txt = lang === 'fr' ? (ann.text_fr || ann.text_ar) : (ann.text_ar || ann.text_fr);
-      if (txt) {
-        document.querySelectorAll('[data-i18n="topBanner"]').forEach(function(el) {
-          el.textContent = txt;
-        });
-      }
-    } else if (ann && ann.enabled === false) {
-      const bar = document.querySelector('.header-top');
-      if (bar) bar.style.display = 'none';
-    }
+    if (ann !== undefined) setBannerState(ann);
 
     // --- نصوص الصفحة الرئيسية من site_content ---
     if (site) {

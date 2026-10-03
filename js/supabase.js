@@ -178,18 +178,20 @@ async function sbLoadSiteContent() {
   return data;
 }
 
+/** الشريط الإعلاني (نموذج صف واحد): يرجع الصف الأول أياً كانت حالته.
+ *  row  = الصف | null = لا يوجد صف ظاهر (يعني: لا شريط) | undefined = خطأ اتصال (لا تغيّر شيئاً) */
 async function sbLoadAnnouncement() {
   const sb = getSupabase();
-  if (!sb) return null;
+  if (!sb) return undefined;
   const { data, error } = await sb
     .from('announcement_banners')
     .select('*')
-    .eq('enabled', true)
     .order('sort_order', { ascending: true })
+    .order('id', { ascending: true })
     .limit(1)
     .maybeSingle();
-  if (error) return null;
-  return data;
+  if (error) { console.warn('announcement load error', error); return undefined; }
+  return data || null;
 }
 
 async function sbGetShippingQuote(wilayaId, subtotal) {
@@ -337,19 +339,29 @@ async function sbUpsertInvoiceSettings(payload) {
   return data;
 }
 
+/** حفظ الشريط. enabled === undefined → لا يغيّر حالة الإظهار الحالية.
+ *  يعدّل الصف الأول فقط ويعطّل أي صفوف قديمة زائدة حتى لا يظهر نص قديم في المتجر. */
 async function sbSaveAnnouncement(text_ar, text_fr, enabled) {
   const sb = getSupabase();
   if (!sb) throw new Error('Supabase not ready');
-  // update first banner or insert
-  const { data: existing } = await sb.from('announcement_banners').select('id').order('sort_order').limit(1).maybeSingle();
-  if (existing && existing.id) {
-    const { error } = await sb.from('announcement_banners').update({
-      text_ar: text_ar || '', text_fr: text_fr || '', enabled: !!enabled
-    }).eq('id', existing.id);
-    if (error) throw error;
+  const { data: existing, error: e0 } = await sb.from('announcement_banners')
+    .select('id').order('sort_order', { ascending: true }).order('id', { ascending: true }).limit(1).maybeSingle();
+  if (e0) throw e0;
+  if (existing && existing.id != null) {
+    const patch = {};
+    if (text_ar !== undefined && text_ar !== null) patch.text_ar = text_ar;
+    if (text_fr !== undefined && text_fr !== null) patch.text_fr = text_fr;
+    if (enabled !== undefined) patch.enabled = !!enabled;
+    if (Object.keys(patch).length) {
+      const { data, error } = await sb.from('announcement_banners').update(patch).eq('id', existing.id).select('id');
+      if (error) throw error;
+      if (!data || !data.length) throw new Error('لم يُحفظ التعديل: لا صلاحية كتابة على announcement_banners — نفّذ ملف FIX_BANNER.sql');
+    }
+    // نظّف الصفوف القديمة الزائدة (إن وُجدت) كي لا تتعارض مع الصف الرئيسي
+    await sb.from('announcement_banners').update({ enabled: false }).neq('id', existing.id);
   } else {
     const { error } = await sb.from('announcement_banners').insert({
-      text_ar: text_ar || ' ', text_fr: text_fr || ' ', enabled: !!enabled, sort_order: 0
+      text_ar: text_ar || ' ', text_fr: text_fr || ' ', enabled: enabled === undefined ? true : !!enabled, sort_order: 0
     });
     if (error) throw error;
   }
