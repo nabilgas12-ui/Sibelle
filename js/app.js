@@ -774,58 +774,60 @@ function renderHomeCategories() {
     );
   }
 
+  // لا نعيد بناء الشريط (ولا نُرجع موضع التمرير) إلا إذا تغيّرت البيانات فعلاً
+  const sig = lang + '|' + list.map(function(c) {
+    return [c.id, c.image, c.name && c.name.ar, c.name && c.name.fr, c.description && c.description.ar].join('~');
+  }).join('||');
+  if (grid._sig === sig && grid.children.length) return;
+  grid._sig = sig;
+
   // ثلاث نسخ لتمرير دائري بلا نهاية
   const one = list.map(function(c, i) { return cardHtml(c, i); }).join('');
   grid.innerHTML = one + one + one;
   grid._loopReady = true;
   grid._setWidth = 0;
 
+  const n = list.length;
+  function isRtl() { return getComputedStyle(grid).direction === 'rtl'; }
+  // موضع التمرير بالقيمة المطلقة من حافة البداية (يعمل في RTL و LTR)
+  function getPos() { return Math.abs(grid.scrollLeft); }
+  function setPos(p) {
+    const prev = grid.style.scrollBehavior;
+    grid.style.scrollBehavior = 'auto';
+    grid.scrollLeft = isRtl() ? -p : p;
+    grid.style.scrollBehavior = prev || '';
+  }
+  function measure() {
+    const cards = grid.querySelectorAll('.category-card');
+    if (cards.length < n * 2) return 0;
+    // عرض مجموعة واحدة = المسافة بين بطاقة وما يماثلها في النسخة التالية (تشمل الفجوات بدقة)
+    return Math.abs(cards[n].offsetLeft - cards[0].offsetLeft);
+  }
+  grid._getPos = getPos; grid._setPos = setPos;
+
   // ابدأ من النسخة الوسطى
   requestAnimationFrame(function() {
-    const cards = grid.querySelectorAll('.category-card');
-    if (!cards.length) return;
-    const n = list.length;
-    // عرض مجموعة واحدة = مجموع عرض البطاقات + الفجوات
-    let setW = 0;
-    for (let i = 0; i < n; i++) {
-      setW += cards[i].offsetWidth;
-      if (i < n - 1) setW += 18; // gap
-    }
-    grid._setWidth = setW;
-    grid._looping = true;
-    grid.style.scrollBehavior = 'auto';
-    grid.scrollLeft = setW;
-    grid.style.scrollBehavior = '';
+    const w = measure();
+    if (!w) return;
+    grid._setWidth = w;
+    setPos(w);
   });
 
   if (!grid._loopBound) {
     grid._loopBound = true;
-    let ticking = false;
+    let settle = null;
+    // لا نقفز أثناء سحب المستخدم — ننتظر توقف التمرير ثم نعيد الموضع بصمت إلى النسخة الوسطى
     grid.addEventListener('scroll', function() {
-      if (!grid._loopReady || !grid._setWidth || grid._lock) return;
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(function() {
-        ticking = false;
-        const w = grid._setWidth;
+      if (!grid._loopReady) return;
+      if (settle) clearTimeout(settle);
+      settle = setTimeout(function() {
+        const w = measure() || grid._setWidth;
         if (!w) return;
-        // إذا اقتربنا من البداية أو النهاية نقفز للنسخة الوسطى
-        if (grid.scrollLeft <= w * 0.15) {
-          grid._lock = true;
-          const prev = grid.style.scrollBehavior;
-          grid.style.scrollBehavior = 'auto';
-          grid.scrollLeft += w;
-          grid.style.scrollBehavior = prev || '';
-          grid._lock = false;
-        } else if (grid.scrollLeft >= w * 1.85) {
-          grid._lock = true;
-          const prev = grid.style.scrollBehavior;
-          grid.style.scrollBehavior = 'auto';
-          grid.scrollLeft -= w;
-          grid.style.scrollBehavior = prev || '';
-          grid._lock = false;
-        }
-      });
+        grid._setWidth = w;
+        const pos = getPos();
+        if (pos < w * 0.5) setPos(pos + w);
+        else if (pos >= w * 1.5) setPos(pos - w);
+      }, 140);
     }, { passive: true });
   }
 }
@@ -914,44 +916,31 @@ function closeMenu() {
 
 function autoScrollCategories() {
   const grid = document.getElementById('categoriesGrid');
-  if (!grid) return;
-  let paused = false;
-  grid.addEventListener('mouseenter', () => { paused = true; });
-  grid.addEventListener('mouseleave', () => { paused = false; });
-  grid.addEventListener('touchstart', () => { paused = true; }, { passive: true });
-  grid.addEventListener('touchend', () => { setTimeout(() => { paused = false; }, 2500); }, { passive: true });
+  if (!grid || grid._autoBound) return;
+  grid._autoBound = true;
+  let pausedUntil = 0;
+  const pause = function(ms) { pausedUntil = Date.now() + ms; };
+  ['pointerdown', 'touchstart', 'wheel', 'mouseenter', 'focusin'].forEach(function(ev) {
+    grid.addEventListener(ev, function() { pause(ev === 'mouseenter' ? 4000 : 5000); }, { passive: true });
+  });
+  grid.addEventListener('mouseleave', function() { pause(1500); });
+  grid.addEventListener('touchend', function() { pause(5000); }, { passive: true });
 
-  setInterval(() => {
-    if (paused || document.hidden) return;
-    const rtl = document.body.classList.contains('rtl');
-    const maxScroll = grid.scrollWidth - grid.clientWidth;
-    if (maxScroll <= 0) return;
+  setInterval(function() {
+    if (document.hidden || Date.now() < pausedUntil) return;
+    if (grid.scrollWidth - grid.clientWidth <= 0 || !grid._loopReady) return;
+    const rtl = getComputedStyle(grid).direction === 'rtl';
     const step = Math.min(grid.clientWidth * 0.85, 280);
-    let next;
-    if (rtl) {
-      // RTL: scrollLeft is often negative or decreases
-      next = grid.scrollLeft - step;
-      if (Math.abs(grid.scrollLeft) >= maxScroll - 10 || next < -maxScroll) {
-        grid.scrollTo({ left: 0, behavior: 'smooth' });
-        return;
-      }
-      grid.scrollBy({ left: -step, behavior: 'smooth' });
-    } else {
-      next = grid.scrollLeft + step;
-      if (next >= maxScroll - 10) {
-        grid.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        grid.scrollBy({ left: step, behavior: 'smooth' });
-      }
-    }
-  }, 3000);
+    grid.scrollBy({ left: rtl ? -step : step, behavior: 'smooth' });
+  }, 3500);
 }
 
 function scrollCategories(dir) {
   const grid = document.getElementById('categoriesGrid');
   if (!grid) return;
-  const factor = document.body.classList.contains('rtl') ? -1 : 1;
+  const factor = getComputedStyle(grid).direction === 'rtl' ? -1 : 1;
   const step = 280;
+  grid._lastManual = Date.now();
   // في الوضع الدائري نمرر دائماً — الحلقة تعيد الموضع تلقائياً
   grid.scrollBy({ left: dir * step * factor, behavior: 'smooth' });
 }
