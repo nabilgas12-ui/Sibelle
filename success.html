@@ -133,7 +133,7 @@
     </div>
 
     <div class="success-actions">
-      <button type="button" class="btn-pdf" id="btnShowInvoice" onclick="showInvoicePreview()">
+      <button type="button" class="btn-pdf" id="btnShowInvoice" onclick="showInvoicePreview()" style="display:none">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span id="pdfBtnText">عرض الفاتورة</span>
       </button>
@@ -173,6 +173,8 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase.js"></script>
   <script src="js/app.js"></script>
   <script>
     let currentOrder = null;
@@ -195,6 +197,28 @@
       }).catch(function() {
         prompt(currentLang === 'ar' ? 'انسخ الرقم:' : 'Copiez le numéro:', orderNumber);
       });
+    }
+
+
+    async function applyInvoiceVisibility() {
+      var btn = document.getElementById('btnShowInvoice');
+      if (!btn) return;
+      var show = null; // null = غير معروف بعد
+      try {
+        for (var i = 0; i < 20 && !(window.SiBelleSB && window.SiBelleSB.getSupabase && window.SiBelleSB.getSupabase()); i++) {
+          await new Promise(function(r){ setTimeout(r, 150); });
+        }
+        var row = await SiBelleSB.loadInvoiceSettings();
+        if (row) show = (row.enabled !== false) && (row.show_on_success !== false);
+      } catch (e) { console.warn('invoice settings', e); }
+      if (show === null) {
+        // فشل الاتصال بالقاعدة: نعتمد الافتراضي (إظهار) ما لم يوجد كاش محلي يقول العكس
+        try {
+          var cfg = JSON.parse(localStorage.getItem('siBelleInvoice') || 'null');
+          show = !(cfg && (cfg.enabled === false || cfg.showOnSuccess === false));
+        } catch (e) { show = true; }
+      }
+      btn.style.display = show ? '' : 'none';
     }
 
     function showInvoicePreview() {
@@ -351,16 +375,8 @@
       const isAr = currentLang === 'ar';
       document.getElementById('orderDetailsTitle').textContent = isAr ? 'تفاصيل الطلب' : 'Détails de la commande';
       document.getElementById('pdfBtnText').textContent = isAr ? 'عرض الفاتورة' : 'Voir la facture';
-      try {
-        var invCfg = null;
-        var st = JSON.parse(localStorage.getItem('siBelleAdminSettings') || 'null');
-        if (st && st.invoice) invCfg = st.invoice;
-        else invCfg = JSON.parse(localStorage.getItem('siBelleInvoice') || 'null');
-        var btnInv = document.getElementById('btnShowInvoice');
-        if (btnInv && invCfg && (invCfg.enabled === false || invCfg.showOnSuccess === false)) {
-          btnInv.style.display = 'none';
-        }
-      } catch (e) {}
+      // زر الفاتورة: القرار يأتي من قاعدة البيانات (إعدادات الأدمن) وليس من localStorage
+      applyInvoiceVisibility();
       document.getElementById('saveOrderLabel').textContent = isAr ? 'احفظي رقم طلبكِ للتتبع' : 'Conservez votre N° de commande';
       document.getElementById('orderHint').textContent = isAr ? 'استخدمي هذا الرقم لتتبع طلبكِ من الصفحة الرئيسية' : 'Utilisez ce numéro pour suivre votre commande depuis l\'accueil';
       document.getElementById('btnCopyOrder').textContent = isAr ? 'نسخ الرقم' : 'Copier le N°';
