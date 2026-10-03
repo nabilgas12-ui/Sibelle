@@ -121,43 +121,70 @@
 
           <h2 style="margin-top:28px"><span class="step">2</span> طريقة الدفع</h2>
           <div class="pay-options" id="payOptions">
-            <label class="pay-option active">
-              <input type="radio" name="payment" value="cod" checked onchange="selectPay(this)">
-              <div><strong data-i18n="payCod">الدفع عند الاستلام</strong><small> نقداً عند استلام الطلب</small></div>
-            </label>
-            <label class="pay-option">
-              <input type="radio" name="payment" value="ccp" onchange="selectPay(this)">
-              <div><strong data-i18n="payCcp">تحويل بريدي / CCP</strong><small> سنرسل رقم الحساب بعد التأكيد</small></div>
-            </label>
-            <label class="pay-option">
-              <input type="radio" name="payment" value="baridi" onchange="selectPay(this)">
-              <div><strong data-i18n="payBaridi">Baridi Mob</strong><small> دفع إلكتروني عبر بريد الجزائر</small></div>
-            </label>
+            <div class="pay-loading" style="padding:14px;color:var(--brown-light);font-size:.9rem">...</div>
           </div>
           <script>
-          (function loadPayMethods(){
-            function run(){
-              var box = document.getElementById('payOptions');
-              if(!box) return;
-              var list = [];
-              try {
-                var s = JSON.parse(localStorage.getItem('siBelleAdminSettings')||'null');
-                if(s && Array.isArray(s.payments)) list = s.payments.filter(function(p){return p.enabled!==false;});
-                else {
-                  var p2 = JSON.parse(localStorage.getItem('siBellePayments')||'null');
-                  if(Array.isArray(p2)) list = p2.filter(function(p){return p.enabled!==false;});
-                }
-              } catch(e){}
-              if(!list.length) return;
-              var lang = localStorage.getItem('siBelleLang')||'ar';
-              box.innerHTML = list.map(function(p,i){
-                var name = (p.name && (p.name[lang]||p.name.ar)) || p.id;
-                var desc = (p.desc && (p.desc[lang]||p.desc.ar)) || '';
-                var det = p.details ? '<small style="display:block;margin-top:4px;opacity:.8;direction:ltr;text-align:left">'+String(p.details).replace(/</g,'')+'</small>' : '';
-                return '<label class="pay-option'+(i===0?' active':'')+'"><input type="radio" name="payment" value="'+p.id+'" '+(i===0?'checked':'')+' onchange="selectPay(this)"><div><strong>'+name+'</strong><small> '+desc+'</small>'+det+'</div></label>';
+          /* طرق الدفع: المصدر الوحيد = جدول payment_methods (المفعّلة فقط) + تحديث فوري */
+          (function(){
+            var FALLBACK = [{ id:'cod', name_ar:'الدفع عند الاستلام', name_fr:'Paiement à la livraison',
+                              description_ar:'نقداً عند استلام الطلب', description_fr:'Espèces à la réception', details:'' }];
+            var current = null;           // آخر قائمة معروضة
+            var chosen = 'cod';
+            function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+            function lang(){ return localStorage.getItem('siBelleLang')||'ar'; }
+            function render(list){
+              var box = document.getElementById('payOptions'); if(!box) return;
+              current = list;
+              var l = lang();
+              var cur = box.querySelector('input[name="payment"]:checked');
+              if (cur) chosen = cur.value;
+              if (!list.some(function(p){return p.id===chosen;})) chosen = list[0].id;
+              box.innerHTML = list.map(function(p){
+                var name = (l==='fr' ? (p.name_fr||p.name_ar) : (p.name_ar||p.name_fr)) || p.id;
+                var desc = (l==='fr' ? (p.description_fr||p.description_ar) : (p.description_ar||p.description_fr)) || '';
+                var det  = p.details ? '<small style="display:block;margin-top:4px;opacity:.8;direction:ltr;text-align:left">'+esc(p.details)+'</small>' : '';
+                var on = p.id===chosen;
+                return '<label class="pay-option'+(on?' active':'')+'"><input type="radio" name="payment" value="'+esc(p.id)+'" '+(on?'checked':'')+' onchange="selectPay(this)"><div><strong>'+esc(name)+'</strong>'+(desc?'<small> '+esc(desc)+'</small>':'')+det+'</div></label>';
               }).join('');
             }
-            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run); else run();
+            async function fetchList(){
+              try {
+                var sb = window.SiBelleSB && SiBelleSB.getSupabase && SiBelleSB.getSupabase();
+                if(!sb) return undefined;
+                var r = await sb.from('payment_methods').select('*').eq('enabled', true).order('sort_order',{ascending:true}).order('id',{ascending:true});
+                if (r.error) { console.warn('payments', r.error); return undefined; }
+                return r.data || [];
+              } catch(e){ return undefined; }
+            }
+            async function refresh(){
+              var list = await fetchList();
+              if (list === undefined) { if(!current) render(FALLBACK); return; }   // خطأ اتصال: لا نكسر الطلب
+              render(list.length ? list : FALLBACK);
+            }
+            window.renderPayOptions = function(){ if(current) render(current); };
+            window.refreshPayOptions = refresh;
+            /* قبل إرسال الطلب: تأكد أن الطريقة المختارة ما زالت مفعّلة */
+            window.verifyPayOption = async function(id){
+              var list = await fetchList();
+              if (list === undefined || !list.length) return true;
+              if (list.some(function(p){return p.id===id;})) return true;
+              render(list);
+              return false;
+            };
+            function start(){
+              refresh();
+              var tries = 0;
+              (function live(){
+                var sb = window.SiBelleSB && SiBelleSB.getSupabase && SiBelleSB.getSupabase();
+                if(!sb || typeof sb.channel!=='function'){ if(tries++<20) setTimeout(live,500); return; }
+                try {
+                  sb.channel('pay-live').on('postgres_changes',{event:'*',schema:'public',table:'payment_methods'}, refresh).subscribe();
+                } catch(e){}
+              })();
+              setInterval(function(){ if(!document.hidden) refresh(); }, 30000);   // شبكة أمان
+              document.addEventListener('visibilitychange', function(){ if(!document.hidden) refresh(); });
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start); else start();
           })();
           </script>
 
@@ -390,6 +417,9 @@
       try {
         // Wait for products so we can validate cart lines
         if (typeof waitForProducts === 'function') await waitForProducts(5000);
+        if (window.verifyPayOption && !(await window.verifyPayOption(form.payment ? form.payment.value : 'cod'))) {
+          throw new Error(currentLang==='ar' ? 'طريقة الدفع المختارة لم تعد متاحة، اختاري طريقة أخرى' : 'Ce mode de paiement n’est plus disponible, choisissez-en un autre');
+        }
         await ensureWilayas();
         const wilayaVal = form.wilaya.value; // may be name or id depending on algeria.js
         let wilayaId = null;

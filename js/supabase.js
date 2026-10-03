@@ -379,17 +379,19 @@ async function sbUpsertLegalPage(type, title_ar, title_fr, content_ar, content_f
 async function sbUpsertPaymentMethod(row) {
   const sb = getSupabase();
   if (!sb) throw new Error('Supabase not ready');
-  const { error } = await sb.from('payment_methods').upsert({
+  const rec = {
     id: row.id,
     enabled: row.enabled !== false,
     name_ar: row.name?.ar || row.id,
     name_fr: row.name?.fr || row.id,
     description_ar: row.desc?.ar || '',
     description_fr: row.desc?.fr || '',
-    details: row.details || '',
-    sort_order: row.sort_order || 0
-  });
+    details: row.details || ''
+  };
+  if (row.sort_order !== undefined && row.sort_order !== null) rec.sort_order = row.sort_order;  // لا نصفّر الترتيب عند التبديل
+  const { data, error } = await sb.from('payment_methods').upsert(rec).select('id');
   if (error) throw error;
+  if (!data || !data.length) throw new Error('لم يُحفظ التعديل: لا صلاحية كتابة على payment_methods — نفّذ FIX_PAYMENTS.sql');
 }
 
 async function sbDeletePaymentMethod(id) {
